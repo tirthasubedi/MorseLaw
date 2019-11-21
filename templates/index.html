@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Morse Law</title>
+</head>
+
+<style>
+    .container {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    -moz-transform: translateX(-50%) translateY(-50%);
+    -webkit-transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%) translateY(-50%);
+}
+form {
+    padding-bottom: 20px;
+}
+
+</style>
+
+<div class="container">
+    <header>
+        <center>
+            <img src="static/images/MorseLaw.png" height="75px" width="250px" margin-bottom="20px"/>
+            <p>
+                <small> Convert any <a href="https://apps.legislature.ky.gov/lrcsearch#tabs-6"> Kentucky State Law</a>
+                    into Morse Code!
+                </small>
+            </p>
+            <form action="{{ url_for('divide') }}" method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <p>
+                    {{ form.searchbox.label }} {{form.searchbox()}}{{ form.submit() }}<br>
+                </p>
+            </form>
+        </center>
+        {% if form.errors %}
+        {{ form.errors }}
+        {% endif %}
+        {% if morsecode %}
+        <form id="demo">
+            <textarea style="height:200px;width:400px;">{{ morsecode }}</textarea>
+            <div style="text-align:center">
+                <button style="margin-top:5px;">Play</button>
+            </div>
+            <input style="visibility: hidden;" type="text" pattern="[.\- ]+" name="code" value="{{morsecode}}">
+        </form>
+        {% endif %}
+    </header>
+</div>
+
+
+<script type="text/javascript">
+var AudioContext = window.AudioContext || window.webkitAudioContext;
+var ctx = new AudioContext();
+var dot = 1.2 / 15;
+
+document.getElementById("demo").onsubmit = function() {
+    var t = ctx.currentTime;
+
+    var oscillator = ctx.createOscillator();
+    oscillator.type = "sine";
+    oscillator.frequency.value = 600;
+
+    var gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0, t);
+
+    this.code.value.split("").forEach(function(letter) {
+        switch(letter) {
+            case ".":
+                gainNode.gain.setValueAtTime(1, t);
+                t += dot;
+                gainNode.gain.setValueAtTime(0, t);
+                t += dot;
+                break;
+            case "-":
+                gainNode.gain.setValueAtTime(1, t);
+                t += 3 * dot;
+                gainNode.gain.setValueAtTime(0, t);
+                t += dot;
+                break;
+            case " ":
+                t += 7 * dot;
+                break;
+        }
+    });
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.start();
+
+    return false;
+}
+</script>
+
+</html>
